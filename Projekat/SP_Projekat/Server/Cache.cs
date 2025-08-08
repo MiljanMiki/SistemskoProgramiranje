@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Timers;
 using System.Threading;
 using System.Collections.Specialized;
 namespace SP_Projekat.Server
@@ -18,15 +17,11 @@ namespace SP_Projekat.Server
         private Queue<string> request_queue;
 
         private readonly ReaderWriterLockSlim locker=new ReaderWriterLockSlim();
-        private System.Timers.Timer timer;
         private readonly int velicinaKesa;
 
         public Cache(int velicinaKesa=0)
         {
             dictionary = new Dictionary<CacheableRequest, string>(velicinaKesa);
-            timer = new System.Timers.Timer(1000*60*5);//na svaka 5 minuta
-            timer.Elapsed += cistiKes;
-            timer.AutoReset = true;
         }
         public Cache(Dictionary<CacheableRequest, string> dictionary)
         {
@@ -35,18 +30,15 @@ namespace SP_Projekat.Server
 
         public void dodajHttpsRequestURed(string request) { request_queue.Enqueue(request); }
         public string vratiPrviHttpsRequest() { return request_queue.Dequeue(); }
-        public bool daLiJeRequestUKesu(string request)
+        private bool daLiJeRequestUKesu(string request)
         {
-            if (dictionary.Count == 0)
-                return false;
+            locker.EnterReadLock();
             try
-            {
-                locker.EnterReadLock();
+            { 
                 return dictionary.ContainsKey(new CacheableRequest(request, 0));
             }
             finally
             {
-
                 locker.ExitReadLock();
             }
            
@@ -56,11 +48,15 @@ namespace SP_Projekat.Server
             locker.EnterWriteLock();
             try
             {
-                if (dictionary.Count() == 0)
-                    timer.Start();
-                else if (dictionary.Count() > velicinaKesa)
-                    cistiKes(null,null);
-                dictionary.Add(new CacheableRequest(request, 0), response);
+                //dal je ovde moguc deadlock, posto cistiKes uzima write lock,a ova f-ja jos drzi
+                //read lock
+                //prosto resenje da se samo prebaci gore
+                if (dictionary.Count() > velicinaKesa)
+                    cistiKes();
+                if(daLiJeRequestUKesu(request)==false)
+                    dictionary.Add(new CacheableRequest(request, 0), response);
+                //else
+                //  exception??
             }
             finally
             {
@@ -90,7 +86,7 @@ namespace SP_Projekat.Server
             }
         }
 
-        public void cistiKes(object sender, ElapsedEventArgs e)
+        private void cistiKes()
         {
             locker.EnterWriteLock();
             try
@@ -113,5 +109,6 @@ namespace SP_Projekat.Server
                 locker.ExitWriteLock();
             }
         }
+
     }
 }

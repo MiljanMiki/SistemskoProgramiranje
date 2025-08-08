@@ -43,8 +43,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\CacheableRequest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Server\Cache.cs" />
     <Compile Include="Server\Logger.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -52,7 +54,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="IQAirApi\" />
-    <Folder Include="Models\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
