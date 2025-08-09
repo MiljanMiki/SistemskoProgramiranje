@@ -1,7 +1,9 @@
-﻿using System;
+﻿using SP_Projekat.Server;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 
@@ -35,6 +37,20 @@ namespace SP_Projekat
     {
         static void Main(string[] args)
         {
+            Cache cache = new Cache(1);
+
+            Thread t1 = new Thread(()=> { Console.WriteLine($"{Thread.CurrentThread.Name}" + " trenutno ubacuje u kes");cache.ubaciUKes("1", "asdf"); });
+            Thread t2 = new Thread(() => { Console.WriteLine($"{Thread.CurrentThread.Name}" + " trenutno ubacuje u kes"); cache.ubaciUKes("2", "ghjk"); });
+            Thread t3 = new Thread(() => { Console.WriteLine($"{Thread.CurrentThread.Name}" + " trenutno proverava kes"); 
+                Console.WriteLine($"{Thread.CurrentThread.Name} je procitao iz kesa: "+cache.vratiResponse("1")); });
+
+            t1.Name = "Prvi write thread";
+            t2.Name = "Drugi write thread";
+            t3.Name = "Prvi read thread";
+            t1.Start();
+            t3.Start();
+            t2.Start();
+            
         }
     }
 }
