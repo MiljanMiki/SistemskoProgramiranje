@@ -11,7 +11,6 @@ namespace SP_Projekat.IQAirApi
 {
     internal class IQAirService
     {
-        private static readonly HttpClient client = new HttpClient();
 
         private readonly string api_key = "2729db86-ba87-4e48-9a2b-73c01124c64a";
 
@@ -44,7 +43,6 @@ namespace SP_Projekat.IQAirApi
                 return null;
             }
         }
-            //return result;//valjda ce da radi
     }
 
 }
