@@ -33,7 +33,7 @@ namespace SP_Projekat.Server
         }
 
 
-        public string ParseHTTP(string RawUrl, string key)
+        private string ParseHTTP(string RawUrl, string key)
         {
             var result = new Dictionary<string, string>();
 
@@ -84,17 +84,52 @@ namespace SP_Projekat.Server
                 try
                 {
                     result = cache.vratiResponse(url);
-                    Console.WriteLine("[Cache Hit]" + url);
+                    Logger.Info(TAG,"[preradiRequest] [Cache Hit]" + url);
                 }
                 catch (ArgumentException e)
                 {
+                    Logger.Error(TAG,e.Message);
                     result = api.vratiZagadjenostGrada(city, state, country);
                     cache.ubaciUKes(url, result);
                 }
 
                 // radi sa resultString posle sta oces.Mozda moze i unutar api da se formatira izlaz
-                Console.Write(result);
+                Logger.Info(TAG,result);
             });
+        }
+
+        public void preradiRequestString(string s)
+        {
+            //otprilike ovako da izgleda
+
+            string url = s;
+            var done = new ManualResetEvent(false);
+            string result;
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
+                    result = cache.vratiResponse(url);
+                    Logger.Info(TAG, "[preradiRequest] [Cache Hit]" + url);
+                }
+                catch (ArgumentException e)
+                {
+                    Logger.Error(TAG, e.Message);
+
+                    string city = ParseHTTP(url, "city");
+                    string state = ParseHTTP(url, "state"); ;
+                    string country = ParseHTTP(url, "country");
+
+                    result = api.vratiZagadjenostGrada(city, state, country);//baca exception ako
+                    //je request los, mora da se preradi
+
+                    cache.ubaciUKes(url, result);
+                }
+
+                Logger.Info(TAG, result);
+                done.Set();
+            });
+            done.WaitOne();
         }
     }
 }

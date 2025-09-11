@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 
 
+
 /*
     Web server implementirati kao konzolnu aplikaciju koja loguje sve primljene zahteve i informacije o 
 njihovoj obradi (da li je došlo do greške, da li je zahtev uspešno obrađen i ostale ključe detalje). 
@@ -25,6 +26,11 @@ Zadatak 21.
     preko browser-a korišćenjem GET metode. Ukoliko navedene vrednosti zagađenja ne postoje, 
     prikazati grešku klijentu. 
 
+Primer poziva serveru: 
+http://api.airvisual.com/v2/city?city=Los%20Angeles&state=California&country=USA&key={
+ {YOUR_API_KEY}} 
+
+
 
 **** API KEY = 2729db86-ba87-4e48-9a2b-73c01124c64a
 
@@ -37,19 +43,10 @@ namespace SP_Projekat
     {
         static void Main(string[] args)
         {
-            Cache cache = new Cache(1);
+            SP_Projekat.Server.Server server = new SP_Projekat.Server.Server(3);
 
-            Thread t1 = new Thread(()=> { Console.WriteLine($"{Thread.CurrentThread.Name}" + " trenutno ubacuje u kes");cache.ubaciUKes("1", "asdf"); });
-            Thread t2 = new Thread(() => { Console.WriteLine($"{Thread.CurrentThread.Name}" + " trenutno ubacuje u kes"); cache.ubaciUKes("2", "ghjk"); });
-            Thread t3 = new Thread(() => { Console.WriteLine($"{Thread.CurrentThread.Name}" + " trenutno proverava kes"); 
-                Console.WriteLine($"{Thread.CurrentThread.Name} je procitao iz kesa: "+cache.vratiResponse("1")); });
-
-            t1.Name = "Prvi write thread";
-            t2.Name = "Drugi write thread";
-            t3.Name = "Prvi read thread";
-            t1.Start();
-            t3.Start();
-            t2.Start();
+            server.preradiRequestString("http://localhost:5500/city?city=Nis&state=Central%20Serbia&country=Serbia");
+            server.preradiRequestString("http://localhost:5500/city?city=Nis&state=Central%20Serbia&country=Serbia");
             
         }
     }

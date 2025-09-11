@@ -5,14 +5,7 @@ namespace SP_Projekat.Server
 {
     internal static class Logger
     {
-        //private static Logger instance;
-
-        /*private Logger() { }
-
-        public static Logger Instance
-        {
-            get { if (instance == null) instance = new Logger(); return instance; }
-        }*/
+        
 
         public static void Info(string tag,string message)
         {
@@ -24,7 +17,7 @@ namespace SP_Projekat.Server
         }
         public static void Error(string tag, string message)
         {
-            Console.Error.WriteLine(tag + " [ERROR] " + message);
+            Console.WriteLine(tag + " [ERROR] " + message);
         }
     }
 }
