@@ -5,7 +5,7 @@ namespace SP_Projekat.Models
     internal class CacheableRequest
     {
         private readonly string httpsRequest;
-        private int numOfHits; //za Least recently used algoritam, na svakih x minuta Timer ce
+        private int numOfHits; //za Least frequently used algoritam, na svakih x minuta Timer ce
                          //prolaziti i izbaciti y elemenata iz kesa sa najmanjim ponavljanjem
 
         public string HttpsRequest { get { return httpsRequest; } }

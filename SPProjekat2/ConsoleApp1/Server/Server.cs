@@ -46,6 +46,7 @@ namespace SPProjekat2.Server
         public void StopServer()
         {
             listener.Stop();
+            
 
         }
     
@@ -66,7 +67,7 @@ namespace SPProjekat2.Server
                         }
                         catch (Exception e)
                         {
-                            Console.Write("Zao nam je doslo je do greske" + e.Message);
+                            Logger.Error(TAG, "Zao nam je doslo je do greske " + e.Message);
                         }
                     });
 
@@ -76,11 +77,11 @@ namespace SPProjekat2.Server
 
             catch (HttpListenerException e)
             {
-                Console.WriteLine(e.Message);
+                Logger.Error(TAG,e.Message);
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Logger.Error(TAG, e.Message);
             }
         }
 
@@ -137,7 +138,7 @@ namespace SPProjekat2.Server
                 try
                 {
                     result = cache.vratiResponse(url);
-                    Console.WriteLine("[Cache Hit]" + url);
+                    Logger.Info(TAG, "[Cache Hit]" + url);
                 }
                 catch (ArgumentException e)
                 {
@@ -148,7 +149,7 @@ namespace SPProjekat2.Server
                 }
 
                 // radi sa resultString posle sta oces.Mozda moze i unutar api da se formatira izlaz
-                Console.Write(result);
+                Logger.Info(TAG, result);
             });
         }
     }

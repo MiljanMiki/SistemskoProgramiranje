@@ -12,7 +12,7 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            Server server = new Server(2000);
+            Server server = new Server(20);
             server.StartServer();
 
             Console.WriteLine("Server je pokrenut. Pritisni ENTER za zaustavljanje.");
