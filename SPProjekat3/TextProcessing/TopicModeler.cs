@@ -42,15 +42,6 @@ namespace SPProjekat3.TextProcessing
 
 
 
-        public List<string> vratiTopics(List<string> descriptions)
-        {
-
-
-            return null;
-        }
-
-        
-
         public void treniranjeLemmatized(string imeModela)
         {
             List<Data> listaData = SredjivanjePodataka.citajLemmatizedData();
@@ -220,25 +211,5 @@ namespace SPProjekat3.TextProcessing
             //Console.WriteLine($"Dominant topic: {value}");
 
         }
-
-
-        LatentDirichletAllocationTransformer FindLda(ITransformer model)
-        {
-            if (model is LatentDirichletAllocationTransformer lda)
-                return lda;
-
-            if (model is TransformerChain<ITransformer> chain )
-            {
-                foreach (var t in chain)
-                {
-                    var found = FindLda(t);
-                    if (found != null)
-                        return found;
-                }
-            }
-
-            return null;
-        }
-
     }
 }

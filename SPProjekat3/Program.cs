@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.IO;
-
+using SPProjekat3.ServerSide;
 
 
 /*
@@ -44,19 +44,35 @@ namespace SPProjekat3
             tm.testiranje(imeModela, new Data("Did a single whale disrupt the crypto ocean?"));
         }
 
-        static void modelBuilderTest()
+        static void modelBuilderTestTSV()
         {
             string path = @"C:\Users\Korisnik\Desktop\Faks\Semestar6\Sistemsko Programiranje\SistemskoProgramiranje\SPProjekat3\TrainingData\archive\News_Category_Dataset_v3.json";
             string output = @"C:\Users\Korisnik\Desktop\Faks\Semestar6\Sistemsko Programiranje\SistemskoProgramiranje\SPProjekat3\TrainingData\archive\labeledData.txt";
             SredjivanjePodataka.srediJsonTabSeperatedLabeled(path, output);
         }
+
+        static void modelBuilderTestCSV()
+        {
+            string path = @"C:\Users\Korisnik\Desktop\Faks\Semestar6\Sistemsko Programiranje\SistemskoProgramiranje\SPProjekat3\TrainingData\archive\News_Category_Dataset_v3.json";
+            string output = @"C:\Users\Korisnik\Desktop\Faks\Semestar6\Sistemsko Programiranje\SistemskoProgramiranje\SPProjekat3\TrainingData\archive\labeledData.csv";
+            SredjivanjePodataka.srediJsonCSV(path, output);
+        }
+
         static void Main(string[] args)
         {
             //tmTest();
             //lemmatizedTest();
+            //modelBuilderTestTSV();
+            //modelBuilderTestCSV();
 
-            modelBuilderTest();
-           
+            //zahtev oblika http://localhost:5050/keyword
+            Server s = new Server(5, "modelPreLemmatized");
+            s.StartServer();
+
+            Console.ReadLine();
+
+            s.StopServer();
+
         }
     }
 }

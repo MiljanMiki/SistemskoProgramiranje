@@ -10,6 +10,84 @@ namespace SPProjekat3.TextProcessing
 {
     static internal class SredjivanjePodataka
     {
+        public static void srediJsonCSV(string inputPath, string output)
+        {
+            // Input and output file paths
+
+
+            using (var reader = new StreamReader(inputPath))
+            using (var writer = new StreamWriter(output,false, new System.Text.UTF8Encoding(false)))
+            {
+                string line;
+                writer.WriteLine("short_description,category");
+
+                while ((line = reader.ReadLine()) != null)
+                {
+                    try
+                    {
+                        using (JsonDocument doc = JsonDocument.Parse(line))
+                        {
+                            string shortDesc = doc.RootElement.GetProperty("short_description").GetString();
+                            string category = doc.RootElement.GetProperty("category").GetString();
+
+                            shortDesc = removePunctuation(shortDesc);
+                            category = removePunctuation(category);
+                            shortDesc=RemoveEmojis(shortDesc);
+
+                            if (string.IsNullOrWhiteSpace(shortDesc) || string.IsNullOrWhiteSpace(category))
+                                continue;
+
+
+                            //shortDesc = EscapeCsv(shortDesc);
+
+                            //shortDesc = RemoveEmojis(shortDesc);
+                            //category = EscapeCsv(category);
+
+                            string pisiOvajString = $"{shortDesc},{category}";
+
+                            writer.WriteLine(pisiOvajString);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Skipping invalid JSON line: {ex.Message}");
+                    }
+                }
+            }
+
+            Console.WriteLine($"Done! Extracted data saved to {output}");
+        }
+
+        static string EscapeCsv(string field)
+        {
+            if (field.Contains(",") || field.Contains("\"") || field.Contains("\n"))
+            {
+                field = "\"" + field.Replace("\"", "\"\"") + "\"";
+            }
+            return field;
+        }
+
+        static string removePunctuation(string field)
+        {
+            if (field.Contains(","))
+                field = field.Replace(",", "");
+
+            if (field.Contains("\n"))
+                field = field.Replace("\n", "");
+
+            if (field.Contains("\""))
+                field = field.Replace("\"", "");
+
+            if (field.Contains("'"))
+                field = field.Replace("'", "");
+
+            if (field.Contains("\t"))
+                field = field.Replace("\t", "");
+
+
+            return field;
+
+        }
         public static void srediJsonTabSeperatedLabeled(string inputPath, string output)
         {
             // Input and output file paths
@@ -28,6 +106,11 @@ namespace SPProjekat3.TextProcessing
                             string shortDesc = doc.RootElement.GetProperty("short_description").GetString();
                             string category = doc.RootElement.GetProperty("category").GetString();
 
+                            if (string.IsNullOrWhiteSpace(shortDesc))
+                                continue;
+
+                            shortDesc=EscapeTsv(shortDesc);
+
                             writer.WriteLine($"{shortDesc}\t{category}");
                         }
                     }
@@ -38,9 +121,32 @@ namespace SPProjekat3.TextProcessing
                 }
             }
 
-            Console.WriteLine("Done! Extracted data saved to output.txt");
+            Console.WriteLine($"Done! Extracted data saved to {output}");
         }
-    
+
+        static string EscapeTsv(string field)
+        {
+            if (string.IsNullOrEmpty(field))
+                return "";
+
+            // Quote field if it contains tab or quote
+            if (field.Contains("\t") || field.Contains("\""))
+            {
+                field = "\"" + field.Replace("\"", "\"\"") + "\"";
+            }
+            return field;
+        }
+        
+
+        static string RemoveEmojis(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return input;
+
+            // Remove surrogate pairs (common emoji encoding in UTF-16)
+            return System.Text.RegularExpressions.Regex.Replace(input, @"\p{Cs}", "");
+        }
+
         public static List<Data> citajLemmatizedData()
         {
             string path = @"C:\Users\Korisnik\Desktop\Faks\Semestar6\Sistemsko Programiranje\SistemskoProgramiranje\SPProjekat3\TrainingData\archive\lemmatizedData.txt";

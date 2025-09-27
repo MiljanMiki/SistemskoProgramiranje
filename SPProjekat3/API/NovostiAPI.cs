@@ -29,6 +29,7 @@ namespace SPProjekat3.API
                 {
                     Q = keyword,
                     SortBy = SortBys.Popularity,
+                    Language = Languages.EN
                 });
 
                 if (articlesResponse.Status == Statuses.Ok)
@@ -42,23 +43,6 @@ namespace SPProjekat3.API
                     }
 
                     return povratnaVrednost;
-
-                    // total results found
-                    //Console.WriteLine(articlesResponse.TotalResults);
-                    // here's the first 20
-                    //foreach (var article in articlesResponse.Articles)
-                    //{
-                    //    // title
-                    //    Console.WriteLine(article.Title);
-                    //    // author
-                    //    Console.WriteLine(article.Author);
-                    //    // description
-                    //    Console.WriteLine(article.Description);
-                    //    // url
-                    //    Console.WriteLine(article.Url);
-                    //    // published at
-                    //    Console.WriteLine(article.PublishedAt);
-                    //}
                 }
                 else
                 {

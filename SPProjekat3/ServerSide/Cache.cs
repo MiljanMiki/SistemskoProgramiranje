@@ -15,7 +15,7 @@ namespace SPProjekat3.ServerSide
     {
         private Dictionary<CacheableRequest, List<string>> dictionary;
 
-        
+
 
         private readonly ReaderWriterLockSlim locker = new ReaderWriterLockSlim();
         private readonly int velicinaKesa;
@@ -23,7 +23,7 @@ namespace SPProjekat3.ServerSide
 
         public Cache(int velicinaKesa = 0)
         {
-            this.velicinaKesa=velicinaKesa;
+            this.velicinaKesa = velicinaKesa;
             dictionary = new Dictionary<CacheableRequest, List<string>>(velicinaKesa);
         }
         public Cache(Dictionary<CacheableRequest, List<string>> dictionary)
@@ -31,47 +31,34 @@ namespace SPProjekat3.ServerSide
             this.dictionary = dictionary;
         }
 
-        private bool daLiJeRequestUKesu(string request)
+
+        public void ubaciUKes(string request, List<string> response)
         {
-            locker.EnterReadLock();
+
+            locker.EnterWriteLock();
             try
             {
-                return dictionary.ContainsKey(new CacheableRequest(request, 0));
+                if (dictionary.Count() > velicinaKesa)
+                    cistiKes();
+
+                //baca ArgumentException ako vec postoji u dictionary
+                //hvataj u serveru!!!!
+                dictionary.Add(new CacheableRequest(request, 0), response);
             }
             finally
             {
-                locker.ExitReadLock();
+                locker.ExitWriteLock();
             }
-
-        }
-        public void ubaciUKes(string request, List<string> response)
-        {
-            if (dictionary.Count() > velicinaKesa)
-                cistiKes();
-
-            //if (daLiJeRequestUKesu(request) == false)
-            {
-                locker.EnterWriteLock();
-                try
-                {
-                    //baca ArgumentException ako vec postoji u dictionary
-                    dictionary.Add(new CacheableRequest(request, 0), response);
-                }
-                finally
-                {
-                    locker.ExitWriteLock();
-                }
-            }
-            //else
-            //  throw new ArgumentException(TAG+"/[ubaciUKes] Request se vec nalazi u kesu!")
         }
 
-        public List<string> vratiResponse(string request) 
+        public List<string> vratiResponse(string request)
         {
-            if (daLiJeRequestUKesu(request) == true)
+            try
             {
+                //ako dodju odjednom 5 thread-a sa istim requestom, svi ce da padnu ovaj check
+                //i ce da se preradjuju 5 ista zahteva...
                 locker.EnterReadLock();
-                try
+                if (dictionary.ContainsKey(new CacheableRequest(request, 0)) == true)
                 {
                     List<string> response;
                     if (dictionary.TryGetValue(new CacheableRequest(request), out response))
@@ -79,29 +66,30 @@ namespace SPProjekat3.ServerSide
                         dictionary.
                                     FirstOrDefault(x => x.Key.HttpsRequest == request)
                                     .Key
-                                    .incrementHit();
+                                    .incrementHit();//ovo inkrementiranje je atomicno
+                                                    //ali lose sto je u read lock...
 
                     }
                     return response;
-
                 }
-                finally
-                {
-                    locker.ExitReadLock();
-                }
-
+                else
+                    throw new ArgumentException(TAG + "/[vratiResponse] Request se ne nalazi u kesu!");
             }
-            else
-                throw new ArgumentException(TAG + "/[vratiResponse] Request se ne nalazi u kesu!");//mozda bolje da ovde baca exception, pa da server hvata i da 
-                                                                                                   //zove API
+            finally
+            {
+                locker.ExitReadLock();
+            }
+
         }
 
         private void cistiKes()
         {
-            //Logger.Info(TAG,"Cistim kes...");
-            locker.EnterWriteLock();
+
             try
             {
+
+                Logger.Info(TAG, "Cistim kes...");
+
                 List<CacheableRequest> listaHitova = new List<CacheableRequest>(dictionary.Count);
                 foreach (CacheableRequest request in dictionary.Keys)
                 {
@@ -111,13 +99,13 @@ namespace SPProjekat3.ServerSide
 
                 listaHitova = listaHitova.OrderBy(r => r.NumOfHits).ToList();
 
-                int kolikiDeoKesaBrisemo = 5;
+                int kolikiDeoKesaBrisemo = 2;
                 for (int i = 0; i < dictionary.Count / kolikiDeoKesaBrisemo; ++i)
                     dictionary.Remove(listaHitova[i]);
             }
             finally
             {
-                locker.ExitWriteLock();
+                Logger.Info(TAG, "Ociscen kes");
             }
         }
 
