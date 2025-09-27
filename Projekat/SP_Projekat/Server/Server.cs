@@ -30,8 +30,30 @@ namespace SP_Projekat.Server
             cache = new Cache(velicinaKesa);
             api = new IQAirService();
             listener = new HttpListener();
+
+            listener.Prefixes.Add("http://localhost:5500/");
         }
 
+        public void StartServer()
+        {
+            listener.Start();
+
+            Logger.Info(TAG, "Server pokrenut. Posaljite zahtev oblika: http://localhost:5500/city?city={city}&state={state}&country={country}");
+
+            while(listener.IsListening)
+            {
+                var context = listener.GetContext();
+
+                preradiRequest(context);
+            }
+
+        }
+
+        public void StopServer()
+        {
+            listener.Stop();
+
+        }
 
         private string ParseHTTP(string RawUrl, string key)
         {
@@ -69,16 +91,24 @@ namespace SP_Projekat.Server
         }
         public void preradiRequest(HttpListenerContext context)
         {
-            //otprilike ovako da izgleda
 
-            string url = context.Request.RawUrl;
 
             ThreadPool.QueueUserWorkItem(_ =>
             {
+                string url = context.Request.RawUrl;
 
                 string city = ParseHTTP(url, "city");
+                if (string.IsNullOrEmpty(city))
+                    throw new ArgumentException("City je null!");
+
                 string state = ParseHTTP(url, "state"); ;
+                if (string.IsNullOrEmpty(state))
+                    throw new ArgumentException("State je null!");
+
                 string country = ParseHTTP(url, "country");
+                if (string.IsNullOrEmpty(country))
+                    throw new ArgumentException("Country je null!");
+
                 string result;
 
                 try
@@ -90,12 +120,16 @@ namespace SP_Projekat.Server
                 {
                     Logger.Error(TAG,e.Message);
                     result = api.vratiZagadjenostGrada(city, state, country);
-                    cache.ubaciUKes(url, result);
+                    cache.ubaciUKes(url, result);//i ovo moze da baci exception!
                 }
 
-                // radi sa resultString posle sta oces.Mozda moze i unutar api da se formatira izlaz
                 Logger.Info(TAG,result);
             });
+        }
+
+        public void vratiOdgovorKorisniku(HttpListenerContext context,string result,bool uspesan)
+        {
+            //TODO
         }
 
         public void preradiRequestString(string s)

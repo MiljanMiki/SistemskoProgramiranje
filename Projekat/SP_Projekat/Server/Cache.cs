@@ -7,103 +7,80 @@ using System.Threading;
 using System.Collections.Specialized;
 namespace SP_Projekat.Server
 {
-   
+
     internal class Cache
     {
-        //<http-request, resposne>
         private Dictionary<CacheableRequest, string> dictionary;
 
-        //red sa https zahtevima
-        //private Queue<string> request_queue;
 
-        private readonly ReaderWriterLockSlim locker=new ReaderWriterLockSlim();
+        private readonly ReaderWriterLockSlim locker = new ReaderWriterLockSlim();
         private readonly int velicinaKesa;
         private readonly string TAG = "[Cache]";
 
-        public Cache(int velicinaKesa=0)
+        public Cache(int velicinaKesa = 0)
         {
             dictionary = new Dictionary<CacheableRequest, string>(velicinaKesa);
         }
         public Cache(Dictionary<CacheableRequest, string> dictionary)
         {
-            this.dictionary= dictionary;
+            this.dictionary = dictionary;
         }
 
-       /* public void dodajHttpsRequestURed(string request) { request_queue.Enqueue(request); }
-        public string vratiPrviHttpsRequest() { return request_queue.Dequeue(); }*/
-        private bool daLiJeRequestUKesu(string request)
+
+        public void ubaciUKes(string request, string response)
         {
-            locker.EnterReadLock();
+            locker.EnterWriteLock();
             try
-            { 
-                return dictionary.ContainsKey(new CacheableRequest(request, 0));
+            {
+                //baca ArgumentException ako vec postoji u dictionary
+                if (dictionary.Count() > velicinaKesa)
+                    cistiKes();
+
+                //baca arguemnt exception!!!
+                dictionary.Add(new CacheableRequest(request, 0), response);
             }
             finally
             {
-                locker.ExitReadLock();
+                locker.ExitWriteLock();
             }
-           
-        }
-        public void ubaciUKes(string request,string response)
-        {
-            if (dictionary.Count() > velicinaKesa)
-                cistiKes();
-
-            //if (daLiJeRequestUKesu(request) == false)
-            {
-                locker.EnterWriteLock();
-                try
-                { 
-                        //baca ArgumentException ako vec postoji u dictionary
-                        dictionary.Add(new CacheableRequest(request, 0), response);
-                }
-                finally
-                {
-                    locker.ExitWriteLock();
-                }
-            }
-            //else
-            //  throw new ArgumentException(TAG+"/[ubaciUKes] Request se vec nalazi u kesu!")
         }
 
         public string vratiResponse(string request)
         {
-            //pitanje kako hocemo da ga koristimo, ako prvo pitamo server dal uopste postoji
-            //ne mora imamo ovaj if
-            if (daLiJeRequestUKesu(request) == true)
+            try
             {
+
                 locker.EnterReadLock();
-                try
+                if (dictionary.ContainsKey(new CacheableRequest(request, 0)) == true)
                 {
                     string response;
                     if (dictionary.TryGetValue(new CacheableRequest(request), out response))
                     {
                         dictionary.
-                                    FirstOrDefault(x => x.Key.HttpsRequest==request)
+                                    FirstOrDefault(x => x.Key.HttpsRequest == request)
                                     .Key
                                     .incrementHit();
 
                     }
-                    return response;
-                    
-                }
-                finally
-                {
-                    locker.ExitReadLock();
-                }
 
+                    return response;
+                }
+                else
+                    throw new ArgumentException(TAG + "/[vratiResponse] Request se ne nalazi u kesu!");
             }
-            else
-                throw new ArgumentException(TAG+"/[vratiResponse] Request se ne nalazi u kesu!");//mozda bolje da ovde baca exception, pa da server hvata i da 
-                                                                    //zove API
+            finally
+            {
+                locker.ExitReadLock();
+            }
         }
 
         private void cistiKes()
         {
-            //Logger.Info(TAG,"Cistim kes...");
-            locker.EnterWriteLock();
+
             try
             {
+                Logger.Info(TAG, "Cistim kes...");
+
                 List<CacheableRequest> listaHitova = new List<CacheableRequest>(dictionary.Count);
                 foreach (CacheableRequest request in dictionary.Keys)
                 {
@@ -119,8 +96,9 @@ namespace SP_Projekat.Server
             }
             finally
             {
-                locker.ExitWriteLock();
+                Logger.Info(TAG, "Ociscen kes");
             }
+
         }
 
     }

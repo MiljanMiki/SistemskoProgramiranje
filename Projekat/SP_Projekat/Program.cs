@@ -43,10 +43,12 @@ namespace SP_Projekat
     {
         static void Main(string[] args)
         {
-            SP_Projekat.Server.Server server = new SP_Projekat.Server.Server(3);
-
-            server.preradiRequestString("http://localhost:5500/city?city=Nis&state=Central%20Serbia&country=Serbia");
-            server.preradiRequestString("http://localhost:5500/city?city=Nis&state=Central%20Serbia&country=Serbia");
+            Server.Server server = new Server.Server(3);
+            server.StartServer();
+            Console.ReadLine();
+            server.StopServer();
+            //server.preradiRequestString("http://localhost:5500/city?city=Nis&state=Central%20Serbia&country=Serbia");
+            //server.preradiRequestString("http://localhost:5500/city?city=Nis&state=Central%20Serbia&country=Serbia");
             
         }
     }
