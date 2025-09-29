@@ -22,9 +22,11 @@ namespace SPProjekat3.API
         {
             //string request = $"https://newsapi.org/v2/everything?q={keyword}&sortBy=popularity&apiKey={apiKey}";
 
-            var newsApiClient = new NewsApiClient(apiKey);
+            
             try
             {
+                var newsApiClient = new NewsApiClient(apiKey);
+
                 var articlesResponse = await newsApiClient.GetEverythingAsync(new EverythingRequest
                 {
                     Q = keyword,
@@ -56,54 +58,6 @@ namespace SPProjekat3.API
             }
         }
 
-        public async Task<List<string>> vratiPopilarneClankoveAsync()
-        {
-            var newsApiClient = new NewsApiClient(apiKey);
-            try
-            {
-                var articlesResponse = await newsApiClient.GetEverythingAsync(new EverythingRequest
-                {
-                    SortBy = SortBys.Popularity,
-                });
-
-                if (articlesResponse.Status == Statuses.Ok)
-                {
-
-                    List<String> povratnaVrednost = new List<string>(articlesResponse.TotalResults);
-                    foreach (var article in articlesResponse.Articles)
-                    {
-                        povratnaVrednost.Add(article.Description);
-                    }
-
-                    return povratnaVrednost;
-
-                    // total results found
-                    //Console.WriteLine(articlesResponse.TotalResults);
-                    // here's the first 20
-                    //foreach (var article in articlesResponse.Articles)
-                    //{
-                    //    // title
-                    //    Console.WriteLine(article.Title);
-                    //    // author
-                    //    Console.WriteLine(article.Author);
-                    //    // description
-                    //    Console.WriteLine(article.Description);
-                    //    // url
-                    //    Console.WriteLine(article.Url);
-                    //    // published at
-                    //    Console.WriteLine(article.PublishedAt);
-                    //}
-                }
-                else
-                {
-                    throw new Exception(TAG + "Greska prilikom pozivanja NewsAPI-ja!");
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.Error(TAG, e.Message);
-                return null;
-            }
-        }
+       
     }
 }

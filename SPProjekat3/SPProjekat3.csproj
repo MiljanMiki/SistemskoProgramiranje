@@ -157,9 +157,11 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerSide\Cache.cs" />
+    <Compile Include="ServerSide\KesZaTaskove.cs" />
     <Compile Include="ServerSide\Logger.cs" />
     <Compile Include="ServerSide\Predictor.cs" />
     <Compile Include="ServerSide\Server.cs" />
+    <Compile Include="ServerSide\ServerSaKesomZaTaskove.cs" />
     <Compile Include="TextProcessing\SredjivanjePodataka.cs" />
     <Compile Include="TextProcessing\TopicModeler.cs" />
   </ItemGroup>

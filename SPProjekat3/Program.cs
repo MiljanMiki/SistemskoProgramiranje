@@ -58,6 +58,33 @@ namespace SPProjekat3
             SredjivanjePodataka.srediJsonCSV(path, output);
         }
 
+        static void testirajKes(ServerSaKesomZaTaskove server)
+        {
+            List<string> urls = new List<string>();
+            urls.Add("/bitcoin");
+            urls.Add("/bitcoin");
+            urls.Add("/ElonMusk");
+            urls.Add("/japan");
+            urls.Add("/serbia");
+            urls.Add("/russia");
+            urls.Add("/bitcoin");
+            urls.Add("/ElonMusk");
+
+            for (int i = 0; i < 100; ++i)
+            {
+                foreach (string url in urls)
+                {
+                    //Thread.Sleep(5000);
+                    Task.Run(async () =>
+                    {
+
+                        server.testKes(url);
+
+                    });
+                }
+            }
+        }
+
         static void Main(string[] args)
         {
             //tmTest();
@@ -66,7 +93,8 @@ namespace SPProjekat3
             //modelBuilderTestCSV();
 
             //zahtev oblika http://localhost:5050/keyword
-            Server s = new Server(5, "modelPreLemmatized");
+            ServerSaKesomZaTaskove s = new ServerSaKesomZaTaskove(5, "modelPreLemmatized");
+            //testirajKes(s);
             s.StartServer();
 
             Console.ReadLine();

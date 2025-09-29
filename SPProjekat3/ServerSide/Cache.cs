@@ -21,16 +21,13 @@ namespace SPProjekat3.ServerSide
         private readonly int velicinaKesa;
         private readonly string TAG = "[Cache]";
 
+        public int VelicinaKesa { get; set; }
+
         public Cache(int velicinaKesa = 0)
         {
             this.velicinaKesa = velicinaKesa;
             dictionary = new Dictionary<CacheableRequest, List<string>>(velicinaKesa);
         }
-        public Cache(Dictionary<CacheableRequest, List<string>> dictionary)
-        {
-            this.dictionary = dictionary;
-        }
-
 
         public void ubaciUKes(string request, List<string> response)
         {
@@ -51,12 +48,10 @@ namespace SPProjekat3.ServerSide
             }
         }
 
-        public List<string> vratiResponse(string request)
+        public List<string> vratiResponse(string request) 
         {
             try
             {
-                //ako dodju odjednom 5 thread-a sa istim requestom, svi ce da padnu ovaj check
-                //i ce da se preradjuju 5 ista zahteva...
                 locker.EnterReadLock();
                 if (dictionary.ContainsKey(new CacheableRequest(request, 0)) == true)
                 {
@@ -73,7 +68,7 @@ namespace SPProjekat3.ServerSide
                     return response;
                 }
                 else
-                    throw new ArgumentException(TAG + "/[vratiResponse] Request se ne nalazi u kesu!");
+                    throw new ArgumentException(TAG + $"/[vratiResponse] \"{request}\"  se ne nalazi u kesu!");
             }
             finally
             {
