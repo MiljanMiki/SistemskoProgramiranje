@@ -40,7 +40,6 @@ namespace SPProjekat2.Server
         {
             listener.Start();
 
-
             _ = listenerZaZahteveAsync();
 
         }
@@ -48,20 +47,16 @@ namespace SPProjekat2.Server
         public void StopServer()
         {
             listener.Stop();
-            
-
         }
     
 
-        public async Task listenerZaZahteveAsync()
+        private async Task listenerZaZahteveAsync()
         {
+            Logger.Info(TAG, "Server pokrenut. Posaljite zahtev oblika: http://localhost:2000/city?city={city}&state={state}&country={country}");
             try
             {
                 while (listener.IsListening)
                 {
-
-                    Logger.Info(TAG, "Server pokrenut. Posaljite zahtev oblika: http://localhost:5500/city?city={city}&state={state}&country={country}");
-
                     var context = await listener.GetContextAsync();
 
                     _ = Task.Run(async () =>
@@ -73,13 +68,11 @@ namespace SPProjekat2.Server
                         catch (Exception e)
                         {
                             Logger.Error(TAG, "Zao nam je doslo je do greske " + e.Message);
+                            vratiOdgovorKorisniku(context, HttpStatusCode.BadRequest, e.Message);
                         }
                     });
-
                 }
             }
-
-
             catch (HttpListenerException e)
             {
                 Logger.Error(TAG,e.Message);
@@ -90,9 +83,8 @@ namespace SPProjekat2.Server
             }
         }
 
-        public string ParseHTTP(string RawUrl, string key)
+        private string ParseHTTP(string RawUrl, string key)
         {
-            var result = new Dictionary<string, string>();
 
             int IndexOfStart = RawUrl.IndexOf("?");
 
@@ -126,59 +118,86 @@ namespace SPProjekat2.Server
         }
       
 
-        public async Task preradiTaskRequest(HttpListenerContext context)
+        private async Task preradiTaskRequest(HttpListenerContext context)
         {
-            //otprilike ovako da izgleda
 
-            string url = context.Request.RawUrl;
+            string url = context.Request.RawUrl.ToLower();
 
-            await Task.Run(async () =>
+            if (url == "/favicon.ico")//ovo smara, samo ignorisi
             {
+                //Logger.Error(TAG, "Favicon.ico zahtev primljen!");
+                vratiOdgovorKorisniku(context, HttpStatusCode.NoContent, "Nemamo ikonicu :( !");
+                return;
+            }
 
-                string city = ParseHTTP(url, "city");
-                if (string.IsNullOrEmpty(city))
-                    throw new ArgumentException("City je null!");
+            string city = ParseHTTP(url, "city");
+            if (string.IsNullOrEmpty(city))
+                throw new ArgumentException("City je null!");
 
-                string state = ParseHTTP(url, "state"); ;
-                if (string.IsNullOrEmpty(state))
-                    throw new ArgumentException("State je null!");
+            string state = ParseHTTP(url, "state"); ;
+            if (string.IsNullOrEmpty(state))
+                throw new ArgumentException("State je null!");
 
-                string country = ParseHTTP(url, "country");
-                if (string.IsNullOrEmpty(country))
-                    throw new ArgumentException("Country je null!");
+            string country = ParseHTTP(url, "country");
+            if (string.IsNullOrEmpty(country))
+                throw new ArgumentException("Country je null!");
 
-                string result;
+            string result;
+            HttpStatusCode code;
+
+            if ((result = cache.vratiResponse(url)) != null)
+            {
+                Logger.Info(TAG, "[Cache Hit]" + url);
+                code = HttpStatusCode.OK;
+            }
+            else
+            {
+                Logger.Error(TAG, $"[vratiResponse] {url} se ne nalazi u kesu!");
 
                 try
                 {
-                    //ne bi trebalo po url da trazimo nego po keywords...(city, state,country)
-                    result = cache.vratiResponse(url);
-                    Logger.Info(TAG, "[Cache Hit]" + url);
-                }
-                catch (ArgumentException e)
-                {
                     result = await api.vratiZagadjenostGrada(city, state, country);
+                    Logger.Info(TAG, "Vracen rezultat od API");
 
-                    cache.ubaciUKes(url, result); // bolje bi bilo da je normalno nego async
+                    cache.ubaciUKes(url, result);
 
+                    code = HttpStatusCode.OK;
+                }
+                catch (Exception e)//hvata error od api
+                {
+                    Logger.Error(TAG, e.Message);
+                    code = HttpStatusCode.NotFound;
+                    result = "Error:" + e.Message;
                 }
 
-                // radi sa resultString posle sta oces.Mozda moze i unutar api da se formatira izlaz
-                Logger.Info(TAG, result);
-            });
+                //try
+                //{
+                //    //ne bi trebalo po url da trazimo nego po keywords...(city, state,country)
+                //    result = cache.vratiResponse(url);
+                //    Logger.Info(TAG, "[Cache Hit]" + url);
+                //}
+                //catch (ArgumentException e)
+                //{
+                //    result = await api.vratiZagadjenostGrada(city, state, country);
+
+                //    cache.ubaciUKes(url, result); // bolje bi bilo da je normalno nego async
+
+                //}
+            }
+            // radi sa resultString posle sta oces.Mozda moze i unutar api da se formatira izlaz
+            Logger.Info(TAG, "Rezultat koji je vracen korisniku:\t" + result);
+            vratiOdgovorKorisniku(context, code, result);
         }
 
-        private async Task PosaljiOdgovorAsync(HttpListenerContext context, int statusKod, string poruka)
+        private async void vratiOdgovorKorisniku(HttpListenerContext context, HttpStatusCode code, string result)
         {
-            context.Response.StatusCode = statusKod;
-            byte[] buffer = Encoding.UTF8.GetBytes(poruka);
-
+            context.Response.StatusCode = (int)code;
+            byte[] buffer = Encoding.UTF8.GetBytes(result);
             context.Response.ContentType = "text/plain";
             context.Response.ContentLength64 = buffer.Length;
 
             await context.Response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
             await context.Response.OutputStream.FlushAsync();
-
             context.Response.OutputStream.Close();
         }
     }

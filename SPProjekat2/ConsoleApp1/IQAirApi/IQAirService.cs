@@ -21,31 +21,23 @@ namespace SPProjekat2.IQAirApi
 
         public async Task<string> vratiZagadjenostGrada(string city, string state, string country)
         {
-            try
+            string requestUri = $"http://api.airvisual.com/v2/city" +
+                                $"?city={Uri.EscapeDataString(city)}" +
+                                $"&state={Uri.EscapeDataString(state)}" +
+                                $"&country={Uri.EscapeDataString(country)}" +
+                                $"&key={api_key}";
+
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUri);
+            request.Method = "GET";
+
+            using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
+            using (StreamReader reader = new StreamReader(response.GetResponseStream()))
             {
-                string requestUri = $"http://api.airvisual.com/v2/city" +
-                                    $"?city={Uri.EscapeDataString(city)}" +
-                                    $"&state={Uri.EscapeDataString(state)}" +
-                                    $"&country={Uri.EscapeDataString(country)}" +
-                                    $"&key={api_key}";
 
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestUri);
-                request.Method = "GET";
-
-                using (HttpWebResponse response = (HttpWebResponse)await request.GetResponseAsync())
-                using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-                {
-
-                    return await reader.ReadToEndAsync();
-                }
+                return await reader.ReadToEndAsync();
             }
-            catch (Exception ex)
-            {
-                Logger.Error(TAG, ex.Message);
-                return null;
-            }
+            
         }
-        //return result;//valjda ce da radi
     }
 
 }

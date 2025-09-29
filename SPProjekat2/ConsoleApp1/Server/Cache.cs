@@ -19,8 +19,9 @@ namespace SPProjekat2.Server
         private readonly int velicinaKesa;
         private readonly string TAG = "[Cache]";
 
-        public Cache(int velicinaKesa = 0)
+        public Cache(int velicinaKesa=0)
         {
+            this.velicinaKesa = velicinaKesa;
             dictionary = new Dictionary<CacheableRequest, string>(velicinaKesa);
         }
         public Cache(Dictionary<CacheableRequest, string> dictionary)
@@ -34,12 +35,15 @@ namespace SPProjekat2.Server
             locker.EnterWriteLock();
             try
             {
-                //baca ArgumentException ako vec postoji u dictionary
-                if (dictionary.Count() > velicinaKesa)
+                if (dictionary.Count() >= velicinaKesa)
                     cistiKes();
 
-                //baca arguemnt exception!!!
+                //baca argument exception!!!
                 dictionary.Add(new CacheableRequest(request, 0), response);
+            }
+            catch(ArgumentException e)
+            {
+                Logger.Error(TAG, e.Message);
             }
             finally
             {
@@ -54,21 +58,21 @@ namespace SPProjekat2.Server
                 
                 locker.EnterReadLock();
                 if (dictionary.ContainsKey(new CacheableRequest(request, 0)) == true)
+                {
+                    string response;
+                    if (dictionary.TryGetValue(new CacheableRequest(request), out response))
                     {
-                        string response;
-                        if (dictionary.TryGetValue(new CacheableRequest(request), out response))
-                        {
-                            dictionary.
-                                        FirstOrDefault(x => x.Key.HttpsRequest == request)
-                                        .Key
-                                        .incrementHit();
+                        dictionary.
+                                    FirstOrDefault(x => x.Key.HttpsRequest == request)
+                                    .Key
+                                    .incrementHit();
 
-                        }
-
-                        return response;
                     }
-                    else
-                        throw new ArgumentException(TAG + "/[vratiResponse] Request se ne nalazi u kesu!");
+
+                    return response;
+                }
+                else
+                    return null;
             }
             finally
             {
