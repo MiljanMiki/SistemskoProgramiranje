@@ -10,6 +10,7 @@ namespace SP_Projekat.Server
 
     internal class Cache
     {
+        //ranjivo na cache stampede problem
         private Dictionary<CacheableRequest, string> dictionary;
 
 
@@ -17,8 +18,9 @@ namespace SP_Projekat.Server
         private readonly int velicinaKesa;
         private readonly string TAG = "[Cache]";
 
-        public Cache(int velicinaKesa = 0)
+        public Cache(int velicinaKesa=0)
         {
+            this.velicinaKesa = velicinaKesa;
             dictionary = new Dictionary<CacheableRequest, string>(velicinaKesa);
         }
         public Cache(Dictionary<CacheableRequest, string> dictionary)
@@ -33,11 +35,15 @@ namespace SP_Projekat.Server
             try
             {
                 //baca ArgumentException ako vec postoji u dictionary
-                if (dictionary.Count() > velicinaKesa)
+                if (dictionary.Count() >= velicinaKesa)
                     cistiKes();
 
                 //baca arguemnt exception!!!
                 dictionary.Add(new CacheableRequest(request, 0), response);
+            }
+            catch(ArgumentException e)
+            {
+                Logger.Error(TAG, $"[ubaciUKes] {e.Message}");
             }
             finally
             {
@@ -49,7 +55,6 @@ namespace SP_Projekat.Server
         {
             try
             {
-
                 locker.EnterReadLock();
                 if (dictionary.ContainsKey(new CacheableRequest(request, 0)) == true)
                 {
@@ -66,7 +71,8 @@ namespace SP_Projekat.Server
                     return response;
                 }
                 else
-                    throw new ArgumentException(TAG + "/[vratiResponse] Request se ne nalazi u kesu!");
+                    return null;
+                    
             }
             finally
             {

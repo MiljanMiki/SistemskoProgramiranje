@@ -20,8 +20,6 @@ namespace SP_Projekat.IQAirApi
 
         public string vratiZagadjenostGrada(string city, string state, string country)
         {
-            try
-            {
                 string requestUri = $"http://api.airvisual.com/v2/city" +
                                     $"?city={Uri.EscapeDataString(city)}" +
                                     $"&state={Uri.EscapeDataString(state)}" +
@@ -36,12 +34,6 @@ namespace SP_Projekat.IQAirApi
                 {
                     return reader.ReadToEnd();
                 }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(TAG, ex.Message);
-                return null;
-            }
         }
     }
 

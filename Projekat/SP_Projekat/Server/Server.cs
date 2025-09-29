@@ -57,7 +57,6 @@ namespace SP_Projekat.Server
 
         private string ParseHTTP(string RawUrl, string key)
         {
-            var result = new Dictionary<string, string>();
 
             int IndexOfStart = RawUrl.IndexOf("?");
 
@@ -89,48 +88,99 @@ namespace SP_Projekat.Server
 
 
         }
-        public void preradiRequest(HttpListenerContext context)
+        private void preradiRequest(HttpListenerContext context)
+        
         {
 
 
             ThreadPool.QueueUserWorkItem(_ =>
             {
-                string url = context.Request.RawUrl;
+                string url = context.Request.RawUrl.ToLower();
+                
+                if(url == "/favicon.ico")
+                { 
+                    //Logger.Error(TAG, "Favicon.ico zahtev primljen!");
+                    vratiOdgovorKorisniku(context, HttpStatusCode.NoContent, "Nemamo ikonicu :( !");
+                    return;
+                }
+
 
                 string city = ParseHTTP(url, "city");
                 if (string.IsNullOrEmpty(city))
-                    throw new ArgumentException("City je null!");
+                {
+                    Logger.Error(TAG, "City parametar je null!");
+                    vratiOdgovorKorisniku(context, HttpStatusCode.BadRequest, "City parametar je null!");
+                    return;
+                }
 
                 string state = ParseHTTP(url, "state"); ;
                 if (string.IsNullOrEmpty(state))
-                    throw new ArgumentException("State je null!");
+                {
+                    Logger.Error(TAG, "State parametar je null!");
+                    vratiOdgovorKorisniku(context, HttpStatusCode.BadRequest, "State parametar je null!");
+                    return;
+                }
 
                 string country = ParseHTTP(url, "country");
                 if (string.IsNullOrEmpty(country))
-                    throw new ArgumentException("Country je null!");
+                {
+                    Logger.Error(TAG, "Country parametar je null!");
+                    vratiOdgovorKorisniku(context, HttpStatusCode.BadRequest, "Country parametar je null!");
+                    return;
+                }
 
                 string result;
+                HttpStatusCode code;
 
-                try
+
+                if ((result = cache.vratiResponse(url)) != null)
                 {
-                    result = cache.vratiResponse(url);
-                    Logger.Info(TAG,"[preradiRequest] [Cache Hit]" + url);
+                    Logger.Info(TAG, "[preradiRequest] [Cache Hit]" + url);
+                    code = HttpStatusCode.OK;
+
+                    Logger.Info(TAG, result);
+
                 }
-                catch (ArgumentException e)
+                else
                 {
-                    Logger.Error(TAG,e.Message);
-                    result = api.vratiZagadjenostGrada(city, state, country);
-                    cache.ubaciUKes(url, result);//i ovo moze da baci exception!
+                    Logger.Error(TAG, $"[vratiResponse] {url} se ne nalazi u kesu!");
+
+                    try
+                    {
+
+                        result = api.vratiZagadjenostGrada(city, state, country);
+                        cache.ubaciUKes(url, result);//i ovo moze da baci exception!
+                                                     //ali se hvata unutar cache-a
+                        Logger.Info(TAG, result);
+                        code = HttpStatusCode.OK;
+                    }
+                    catch (Exception e)//ako API vrati gresku
+                    {
+                        Logger.Error(TAG, "[IQAirApi]"+e.Message);
+                        result = "ERROR:"+e.Message;
+                        code = HttpStatusCode.NotFound;
+                    }
                 }
 
-                Logger.Info(TAG,result);
+                vratiOdgovorKorisniku(context, code, result);
+
+                
             });
         }
 
-        public void vratiOdgovorKorisniku(HttpListenerContext context,string result,bool uspesan)
+        private void vratiOdgovorKorisniku(HttpListenerContext context,HttpStatusCode code,string result)
         {
-            //TODO
+            context.Response.StatusCode = (int)code;
+            byte[] buffer = Encoding.UTF8.GetBytes(result);
+            context.Response.ContentType = "text/plain";
+            context.Response.ContentLength64 = buffer.Length;
+
+            context.Response.OutputStream.Write(buffer, 0, buffer.Length);
+            context.Response.OutputStream.Flush();
+            context.Response.OutputStream.Close();
         }
+
+        
 
         public void preradiRequestString(string s)
         {
