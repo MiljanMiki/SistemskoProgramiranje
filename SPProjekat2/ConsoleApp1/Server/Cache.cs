@@ -17,18 +17,14 @@ namespace SPProjekat2.Server
 
         private readonly ReaderWriterLockSlim locker = new ReaderWriterLockSlim();
         private readonly int velicinaKesa;
-        private readonly string TAG = "[Cache]";
+        private const string TAG = "[Cache]";
 
+        public int VelicinaKesa { get; set; }
         public Cache(int velicinaKesa=0)
         {
             this.velicinaKesa = velicinaKesa;
             dictionary = new Dictionary<CacheableRequest, string>(velicinaKesa);
         }
-        public Cache(Dictionary<CacheableRequest, string> dictionary)
-        {
-            this.dictionary = dictionary;
-        }
-
     
         public void ubaciUKes(string request, string response)
         {
@@ -72,7 +68,7 @@ namespace SPProjekat2.Server
                     return response;
                 }
                 else
-                    return null;
+                    throw new ArgumentException($"{request} se ne nalazi u kesu!");
             }
             finally
             {

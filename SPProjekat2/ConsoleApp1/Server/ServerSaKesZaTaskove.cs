@@ -1,23 +1,22 @@
-﻿using System;
+﻿using SPProjekat2.IQAirApi;
+using SPProjekat2.Server;
+using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
 using System.Linq;
 using System.Net;
-using System.Security.Policy;
+using System.Runtime.Remoting.Contexts;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using SPProjekat2.Server;
-using SPProjekat2.IQAirApi;
-using SPProjekat2.Models;
 
 namespace SPProjekat2.Server
 {
-    internal class Server
+    internal class ServerSaKesZaTaskove
     {
         private HttpListener listener;
         private Cache cache;
-        private static IQAirApi.IQAirService api;
+        private KesZaTaskove kesZaTaskove;
+        private static IQAirService api;
         private readonly string TAG = "[Server]";
 
         //Ako nesto treba da se loguje, samo zovi Logger.Info
@@ -26,15 +25,16 @@ namespace SPProjekat2.Server
         //LOGUJ SVE! Kada uvatis gresku, da li se pocinje prerada, da li se zove API itd.
 
 
-        public Server(int velicinaKesa)
+        public ServerSaKesZaTaskove(int velicinaKesa)
         {
             cache = new Cache(velicinaKesa);
             api = new IQAirService();
+            kesZaTaskove = new KesZaTaskove(cache, api);
             listener = new HttpListener();
             listener.Prefixes.Add("http://localhost:5500/");
         }
 
-     
+
 
         public void StartServer()
         {
@@ -48,7 +48,7 @@ namespace SPProjekat2.Server
         {
             listener.Stop();
         }
-    
+
 
         private async Task listenerZaZahteveAsync()
         {
@@ -63,7 +63,7 @@ namespace SPProjekat2.Server
                     {
                         try
                         {
-                            await preradiTaskRequestAsync(context);
+                            await preradiTaskRequestAsyncV2(context);
                         }
                         catch (Exception e)
                         {
@@ -75,7 +75,7 @@ namespace SPProjekat2.Server
             }
             catch (HttpListenerException e)
             {
-                Logger.Error(TAG,e.Message);
+                Logger.Error(TAG, e.Message);
             }
             catch (Exception e)
             {
@@ -116,11 +116,68 @@ namespace SPProjekat2.Server
 
 
         }
-      
 
-        private async Task preradiTaskRequestAsync(HttpListenerContext context)
+        //koristi obican cache
+        //private async Task preradiTaskRequestAsync(HttpListenerContext context)
+        //{
+
+        //    string url = context.Request.RawUrl.ToLower();
+
+        //    if (url == "/favicon.ico")//ovo smara, samo ignorisi
+        //    {
+        //        //Logger.Error(TAG, "Favicon.ico zahtev primljen!");
+        //        vratiOdgovorKorisnikuAsync(context, HttpStatusCode.NoContent, "Nemamo ikonicu :( !");
+        //        return;
+        //    }
+
+        //    string city = ParseHTTP(url, "city");
+        //    if (string.IsNullOrEmpty(city))
+        //        throw new ArgumentException("City je null!");
+
+        //    string state = ParseHTTP(url, "state"); ;
+        //    if (string.IsNullOrEmpty(state))
+        //        throw new ArgumentException("State je null!");
+
+        //    string country = ParseHTTP(url, "country");
+        //    if (string.IsNullOrEmpty(country))
+        //        throw new ArgumentException("Country je null!");
+
+        //    string result;
+        //    HttpStatusCode code;
+
+        //    if ((result = cache.vratiResponse(url)) != null)
+        //    {
+        //        Logger.Info(TAG, "[Cache Hit]" + url);
+        //        code = HttpStatusCode.OK;
+        //    }
+        //    else
+        //    {
+        //        Logger.Error(TAG, $"[vratiResponse] {url} se ne nalazi u kesu!");
+
+        //        try
+        //        {
+        //            result = await api.vratiZagadjenostGradaAsync(city, state, country);
+        //            Logger.Info(TAG, "Vracen rezultat od API");
+
+        //            cache.ubaciUKes(url, result);
+
+        //            code = HttpStatusCode.OK;
+        //        }
+        //        catch (Exception e)//hvata error od api
+        //        {
+        //            Logger.Error(TAG, e.Message);
+        //            code = HttpStatusCode.NotFound;
+        //            result = "Error:" + e.Message;
+        //        }
+
+               
+        //    }
+        //    Logger.Info(TAG, "Rezultat koji je vracen korisniku:\t" + result);
+        //    vratiOdgovorKorisnikuAsync(context, code, result);
+        //}
+
+        private async Task preradiTaskRequestAsyncV2(HttpListenerContext context)
         {
-
             string url = context.Request.RawUrl.ToLower();
 
             if (url == "/favicon.ico")//ovo smara, samo ignorisi
@@ -145,49 +202,66 @@ namespace SPProjekat2.Server
             string result;
             HttpStatusCode code;
 
-            if ((result = cache.vratiResponse(url)) != null)
+
+            try
             {
-                Logger.Info(TAG, "[Cache Hit]" + url);
+                result = await kesZaTaskove.vratiRezultatAsync(url,city,state,country);
                 code = HttpStatusCode.OK;
             }
-            else
+            catch(Exception e)
             {
-                Logger.Error(TAG, $"[vratiResponse] {url} se ne nalazi u kesu!");
-
-                try
-                {
-                    result = await api.vratiZagadjenostGradaAsync(city, state, country);
-                    Logger.Info(TAG, "Vracen rezultat od API");
-
-                    cache.ubaciUKes(url, result);
-
-                    code = HttpStatusCode.OK;
-                }
-                catch (Exception e)//hvata error od api
-                {
-                    Logger.Error(TAG, e.Message);
-                    code = HttpStatusCode.NotFound;
-                    result = "Error:" + e.Message;
-                }
-
-                //try
-                //{
-                //    //ne bi trebalo po url da trazimo nego po keywords...(city, state,country)
-                //    result = cache.vratiResponse(url);
-                //    Logger.Info(TAG, "[Cache Hit]" + url);
-                //}
-                //catch (ArgumentException e)
-                //{
-                //    result = await api.vratiZagadjenostGrada(city, state, country);
-
-                //    cache.ubaciUKes(url, result); // bolje bi bilo da je normalno nego async
-
-                //}
+                Logger.Error(TAG, e.Message);
+                result = e.Message;
+                code = HttpStatusCode.BadRequest;
             }
+
+            if (result == null)//samo ako je puko api
+                throw new Exception("Result je null!");
+
             Logger.Info(TAG, "Rezultat koji je vracen korisniku:\t" + result);
+
             vratiOdgovorKorisnikuAsync(context, code, result);
         }
 
+        public async void testKes(string request)
+        {
+            string url = request.ToLower() ;
+
+            
+
+            string city = ParseHTTP(url, "city");
+            if (string.IsNullOrEmpty(city))
+                throw new ArgumentException("City je null!");
+
+            string state = ParseHTTP(url, "state"); ;
+            if (string.IsNullOrEmpty(state))
+                throw new ArgumentException("State je null!");
+
+            string country = ParseHTTP(url, "country");
+            if (string.IsNullOrEmpty(country))
+                throw new ArgumentException("Country je null!");
+
+            string result;
+            HttpStatusCode code;
+
+
+            try
+            {
+                result = await kesZaTaskove.vratiRezultatAsync(url, city, state, country);
+                code = HttpStatusCode.OK;
+            }
+            catch (Exception e)
+            {
+                Logger.Error(TAG, e.Message);
+                result = e.Message;
+                code = HttpStatusCode.BadRequest;
+            }
+
+            if (result == null)
+                throw new Exception("Result je null!");
+
+            Logger.Info(TAG, "Rezultat koji je vracen korisniku:\t" + result+"\n");
+        }
         private async void vratiOdgovorKorisnikuAsync(HttpListenerContext context, HttpStatusCode code, string result)
         {
             context.Response.StatusCode = (int)code;
@@ -200,5 +274,4 @@ namespace SPProjekat2.Server
             context.Response.OutputStream.Close();
         }
     }
-
 }

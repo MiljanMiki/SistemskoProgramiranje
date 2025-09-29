@@ -13,13 +13,13 @@ namespace SPProjekat2.IQAirApi
     {
         private static readonly HttpClient client = new HttpClient();
 
-        private readonly string api_key = "2729db86-ba87-4e48-9a2b-73c01124c64a";
+        private const string api_key = "2729db86-ba87-4e48-9a2b-73c01124c64a";
 
-        private readonly string TAG = "[IqAirService]";
+        private const string TAG = "[IqAirService]";
 
         public IQAirService() { }
 
-        public async Task<string> vratiZagadjenostGrada(string city, string state, string country)
+        public async Task<string> vratiZagadjenostGradaAsync(string city, string state, string country)
         {
             string requestUri = $"http://api.airvisual.com/v2/city" +
                                 $"?city={Uri.EscapeDataString(city)}" +
