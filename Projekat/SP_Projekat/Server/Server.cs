@@ -89,10 +89,7 @@ namespace SP_Projekat.Server
 
         }
         private void preradiRequest(HttpListenerContext context)
-        
         {
-
-
             ThreadPool.QueueUserWorkItem(_ =>
             {
                 string url = context.Request.RawUrl.ToLower();
@@ -132,13 +129,13 @@ namespace SP_Projekat.Server
                 string result;
                 HttpStatusCode code;
 
+                //string query = city+state+country; mozda je bolje ovo da se cuva u cache?
+
 
                 if ((result = cache.vratiResponse(url)) != null)
                 {
                     Logger.Info(TAG, "[preradiRequest] [Cache Hit]" + url);
                     code = HttpStatusCode.OK;
-
-                    Logger.Info(TAG, result);
 
                 }
                 else
@@ -151,7 +148,7 @@ namespace SP_Projekat.Server
                         result = api.vratiZagadjenostGrada(city, state, country);
                         cache.ubaciUKes(url, result);//i ovo moze da baci exception!
                                                      //ali se hvata unutar cache-a
-                        Logger.Info(TAG, result);
+                        
                         code = HttpStatusCode.OK;
                     }
                     catch (Exception e)//ako API vrati gresku
@@ -161,7 +158,7 @@ namespace SP_Projekat.Server
                         code = HttpStatusCode.NotFound;
                     }
                 }
-
+                Logger.Info(TAG,"Korisniku su vraceni rezultati:  "+ result);
                 vratiOdgovorKorisniku(context, code, result);
 
                 

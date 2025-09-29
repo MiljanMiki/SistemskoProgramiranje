@@ -43,7 +43,7 @@ namespace SP_Projekat
     {
         static void Main(string[] args)
         {
-            Server.Server server = new Server.Server(3);
+            Server.Server server = new Server.Server(20);
             server.StartServer();
             Console.ReadLine();
             server.StopServer();

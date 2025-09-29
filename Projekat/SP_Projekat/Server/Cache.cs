@@ -23,18 +23,12 @@ namespace SP_Projekat.Server
             this.velicinaKesa = velicinaKesa;
             dictionary = new Dictionary<CacheableRequest, string>(velicinaKesa);
         }
-        public Cache(Dictionary<CacheableRequest, string> dictionary)
-        {
-            this.dictionary = dictionary;
-        }
-
 
         public void ubaciUKes(string request, string response)
         {
             locker.EnterWriteLock();
             try
             {
-                //baca ArgumentException ako vec postoji u dictionary
                 if (dictionary.Count() >= velicinaKesa)
                     cistiKes();
 
