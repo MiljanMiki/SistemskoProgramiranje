@@ -38,7 +38,7 @@ namespace SPProjekat3.ServerSide
             locker.EnterWriteLock();
             try
             {
-                if (dictionary.Count() > velicinaKesa)
+                if (dictionary.Count() >= velicinaKesa)
                     cistiKes();
 
                 //baca ArgumentException ako vec postoji u dictionary

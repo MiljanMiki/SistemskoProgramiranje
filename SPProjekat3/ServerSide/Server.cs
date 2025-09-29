@@ -103,36 +103,38 @@ namespace SPProjekat3.ServerSide
 
         private async Task preradiTaskRequestAsync(HttpListenerContext context)
         {
-
+            
             string url = context.Request.RawUrl;
 
             await Task.Run(async () =>
             {
 
-                string keyword = ParseHTTP(url);
+            string keyword = ParseHTTP(url);
 
-                if (keyword == null)
-                    throw new Exception("[preradiTaskRequestAsync]Greska prilikom parsiranja url-a!");
+            if (keyword == null)
+                throw new Exception("[preradiTaskRequestAsync]Greska prilikom parsiranja url-a!");
 
-                List<string> results;
-                try
-                {
-                    results = cache.vratiResponse(keyword);
-                    Logger.Info(TAG, "[Cache Hit] " + keyword);
-                }
-                catch (ArgumentException e)
-                {
-                    Logger.Error(TAG, "[Cache Miss] " + e.Message + " " + keyword);
-                    results = await api.vratiNajpopularnijeClankoveAsync(keyword);
+            Logger.Info(TAG, $"Thread sa ID: {Environment.CurrentManagedThreadId} preradjuje request");
 
-                    cache.ubaciUKes(keyword, results);//i ovo baca exception!!! 
-                }
+            List<string> results;
+            try
+            {
+                results = cache.vratiResponse(keyword);
+                Logger.Info(TAG, "[Cache Hit] " + keyword);
+            }
+            catch (ArgumentException e)
+            {
+                Logger.Error(TAG, "[Cache Miss] " + e.Message + " " + keyword);
+                results = await api.vratiNajpopularnijeClankoveAsync(keyword);
 
-                foreach (var result in results)
-                {
-                    var predikcija = predictor.predict(result);
-                    Logger.Info(TAG, "Za " + keyword + "\t" + predikcija);
-                }
+                cache.ubaciUKes(keyword, results);//i ovo baca exception!!! 
+            }
+
+            foreach (var result in results)
+            {
+                var predikcija = predictor.predict(result);
+                Logger.Info(TAG, "Za " + keyword + "\t" + predikcija);
+            }
 
             });
         }

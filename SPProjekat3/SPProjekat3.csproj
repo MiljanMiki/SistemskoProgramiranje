@@ -178,7 +178,6 @@
     <Error Condition="!Exists('packages\Microsoft.ML.4.0.2\build\netstandard2.0\Microsoft.ML.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.ML.4.0.2\build\netstandard2.0\Microsoft.ML.targets'))" />
   </Target>
   <Import Project="packages\Microsoft.ML.4.0.2\build\netstandard2.0\Microsoft.ML.targets" Condition="Exists('packages\Microsoft.ML.4.0.2\build\netstandard2.0\Microsoft.ML.targets')" />
-
   <ItemGroup>
     <Content Include="MLModels\**">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
