@@ -9,15 +9,15 @@ namespace SP_Projekat.Server
 
         public static void Info(string tag,string message)
         {
-            Console.WriteLine("\n"+tag+" [INFO] " + message);
+            Console.WriteLine(DateTime.Now + "\t"+tag +" [INFO] " + message);
         }
         public static void Warning(string tag, string message)
         {
-            Console.WriteLine("\n" + tag + " [WARNING] " +message);
+            Console.WriteLine(DateTime.Now + "\t" + tag + " [WARNING] " +message);
         }
         public static void Error(string tag, string message)
         {
-            Console.WriteLine("\n" + tag + " [ERROR] " + message);
+            Console.WriteLine(DateTime.Now + "\t" + tag + " [ERROR] " + message);
         }
     }
 }
